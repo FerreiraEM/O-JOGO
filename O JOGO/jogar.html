@@ -1,0 +1,2200 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arena Marvel - O Jogo</title>
+    <!-- Fontes de apoio caso a fonte local não carregue no preview online -->
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Rajdhani:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* 1. MESMA FONTE DO SEU PROJETO */
+        @font-face {
+            font-family: 'Avengeance';
+            src: url('avengeance/AVENGEANCE\ HEROIC\ AVENGER.ttf') format('truetype'),
+                 url('AVENGEANCE\ HEROIC\ AVENGER.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        :root {
+            --red-neon: #ff003c;
+            --blue-neon: #add8e6;
+            --gold-neon: #ffcc00;
+            --dark-bg: rgba(0, 0, 0, 0.82);
+            --panel-bg: rgba(12, 14, 22, 0.9);
+            --font-hero: 'Avengeance', 'Bangers', Impact, sans-serif;
+            --font-ui: 'Rajdhani', Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-image: url('https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?q=80&w=1920&auto=format&fit=crop');
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: white;
+            font-family: var(--font-ui);
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Máscara escura no estilo do seu opcoes.css / creditos.css */
+        .app-overlay {
+            background: radial-gradient(circle at center, rgba(10, 12, 20, 0.72) 0%, rgba(0, 0, 0, 0.92) 100%);
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            position: relative;
+        }
+
+        /* Botão Voltar idêntico ao padrão do seu projeto */
+        .btn-voltar {
+            position: fixed;
+            top: 18px;
+            left: 20px;
+            z-index: 100;
+            color: black;
+            background-color: var(--blue-neon);
+            padding: 10px 22px;
+            font-size: 16px;
+            font-family: var(--font-hero);
+            letter-spacing: 1.5px;
+            text-decoration: none;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0px 4px 15px rgba(255, 0, 60, 0.4);
+            transition: all 0.25s ease;
+        }
+
+        .btn-voltar:hover {
+            background-color: var(--red-neon);
+            color: white;
+            transform: scale(1.06);
+        }
+
+        .btn-som {
+            position: fixed;
+            top: 18px;
+            right: 20px;
+            z-index: 100;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.75);
+            border: 2px solid var(--blue-neon);
+            padding: 8px 16px;
+            font-size: 15px;
+            font-family: var(--font-ui);
+            font-weight: 700;
+            text-transform: uppercase;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .btn-som:hover {
+            border-color: var(--red-neon);
+            background-color: var(--red-neon);
+        }
+
+        /* ================= TELA DE SELEÇÃO DE PERSONAGENS ================= */
+        #select-screen {
+            width: 100%;
+            max-width: 1120px;
+            background: var(--panel-bg);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-left: 5px solid var(--red-neon);
+            border-right: 5px solid var(--blue-neon);
+            border-radius: 10px;
+            padding: 22px 28px;
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 35px;
+        }
+
+        .header-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 12px;
+            gap: 12px;
+        }
+
+        .titulo-arena {
+            font-family: var(--font-hero);
+            font-size: 46px;
+            margin: 0;
+            color: white;
+            letter-spacing: 3px;
+            text-shadow: 3px 3px 0px var(--red-neon);
+        }
+
+        .subtitulo-arena {
+            color: var(--blue-neon);
+            font-size: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        /* Seletores de Modo e Cenário */
+        .config-partida {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .mode-switch {
+            display: flex;
+            background: rgba(0,0,0,0.6);
+            border-radius: 6px;
+            padding: 4px;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+
+        .mode-btn {
+            background: transparent;
+            color: #aaa;
+            border: none;
+            padding: 8px 16px;
+            font-family: var(--font-ui);
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .mode-btn.active {
+            background: var(--red-neon);
+            color: white;
+            box-shadow: 0 0 12px rgba(255, 0, 60, 0.5);
+        }
+
+        .stage-select {
+            background: #141824;
+            color: var(--blue-neon);
+            border: 1px solid var(--blue-neon);
+            padding: 8px 14px;
+            border-radius: 5px;
+            font-family: var(--font-ui);
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+            cursor: pointer;
+            outline: none;
+        }
+
+        /* Painel Versus (P1 vs P2) */
+        .vs-preview-container {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 16px;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 14px 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .fighter-preview-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .fighter-preview-card.p2 {
+            flex-direction: row-reverse;
+            text-align: right;
+        }
+
+        .preview-canvas-box {
+            width: 96px;
+            height: 96px;
+            background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, rgba(0,0,0,0.7) 100%);
+            border: 2px solid var(--blue-neon);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .fighter-preview-card.p2 .preview-canvas-box {
+            border-color: var(--red-neon);
+        }
+
+        .fighter-info {
+            flex: 1;
+        }
+
+        .player-tag {
+            font-size: 13px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--blue-neon);
+        }
+
+        .fighter-preview-card.p2 .player-tag {
+            color: var(--red-neon);
+        }
+
+        .fighter-name {
+            font-family: var(--font-hero);
+            font-size: 30px;
+            margin: 2px 0;
+            letter-spacing: 1.5px;
+            color: white;
+        }
+
+        .fighter-special-desc {
+            font-size: 13px;
+            color: #ccc;
+            margin-bottom: 6px;
+        }
+
+        .stats-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            max-width: 220px;
+        }
+
+        .fighter-preview-card.p2 .stats-bars {
+            margin-left: auto;
+        }
+
+        .stat-line {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #aaa;
+            font-weight: 700;
+        }
+
+        .stat-track {
+            flex: 1;
+            height: 6px;
+            background: rgba(255,255,255,0.12);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .stat-fill {
+            height: 100%;
+            background: var(--blue-neon);
+            transition: width 0.3s ease;
+        }
+
+        .fighter-preview-card.p2 .stat-fill {
+            background: var(--red-neon);
+        }
+
+        .vs-badge {
+            font-family: var(--font-hero);
+            font-size: 44px;
+            color: var(--gold-neon);
+            text-shadow: 0 0 15px rgba(255, 204, 0, 0.8), 3px 3px 0px #000;
+            padding: 0 10px;
+        }
+
+        /* Instrução de quem está escolhendo */
+        .turn-banner {
+            text-align: center;
+            font-size: 16px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            padding: 6px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--gold-neon);
+        }
+
+        /* Grade dos 6 Heróis da Marvel */
+        .roster-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+        }
+
+        .char-slot {
+            background: rgba(20, 24, 36, 0.85);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            padding: 10px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .char-slot:hover {
+            transform: translateY(-4px);
+            background: rgba(35, 42, 62, 0.95);
+            border-color: white;
+        }
+
+        .char-slot.selected-p1 {
+            border-color: var(--blue-neon);
+            box-shadow: 0 0 16px rgba(173, 216, 230, 0.65);
+        }
+
+        .char-slot.selected-p2 {
+            border-color: var(--red-neon);
+            box-shadow: 0 0 16px rgba(255, 0, 60, 0.65);
+        }
+
+        .char-slot.selected-both {
+            border-image: linear-gradient(135deg, var(--blue-neon), var(--red-neon)) 1;
+            box-shadow: 0 0 18px rgba(255, 204, 0, 0.65);
+        }
+
+        .slot-badges {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            right: 6px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .badge-p {
+            font-family: var(--font-hero);
+            font-size: 13px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            letter-spacing: 1px;
+        }
+
+        .badge-p1 {
+            background: var(--blue-neon);
+            color: #000;
+        }
+
+        .badge-p2 {
+            background: var(--red-neon);
+            color: #fff;
+            margin-left: auto;
+        }
+
+        .char-slot-name {
+            font-family: var(--font-hero);
+            font-size: 19px;
+            margin-top: 8px;
+            letter-spacing: 1px;
+            text-align: center;
+            color: #fff;
+        }
+
+        .char-slot-role {
+            font-size: 11px;
+            color: #aaa;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .select-actions {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 6px;
+        }
+
+        .btn-lutar {
+            font-family: var(--font-hero);
+            font-size: 28px;
+            letter-spacing: 2px;
+            padding: 12px 55px;
+            background: var(--red-neon);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 0 25px rgba(255, 0, 60, 0.6);
+            transition: all 0.25s ease;
+        }
+
+        .btn-lutar:hover {
+            background: var(--blue-neon);
+            color: black;
+            transform: scale(1.06);
+            box-shadow: 0 0 25px rgba(173, 216, 230, 0.8);
+        }
+
+        .btn-sec {
+            font-family: var(--font-hero);
+            font-size: 18px;
+            letter-spacing: 1.5px;
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-sec:hover {
+            background: white;
+            color: black;
+        }
+
+        /* ================= TELA DE LUTA (ARENA STREET FIGHTER) ================= */
+        #battle-screen {
+            display: none;
+            width: 100%;
+            max-width: 1024px;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .arena-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: #000;
+            border: 3px solid rgba(255, 255, 255, 0.25);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.9);
+        }
+
+        #game-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* HUD Superior estilo Street Fighter / Marvel vs Capcom */
+        .hud-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 14px 20px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: start;
+            gap: 14px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .hud-side {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .hud-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+
+        .hud-side.p2 .hud-top-row {
+            flex-direction: row-reverse;
+        }
+
+        .hud-char-name {
+            font-family: var(--font-hero);
+            font-size: 24px;
+            letter-spacing: 1.5px;
+            color: #fff;
+            text-shadow: 2px 2px 4px #000;
+        }
+
+        .round-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .round-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.65);
+            border: 2px solid #fff;
+        }
+
+        .round-dot.won {
+            background: var(--gold-neon);
+            box-shadow: 0 0 10px var(--gold-neon);
+            border-color: #fff;
+        }
+
+        /* Barra de Vida com Dano Residual Amarelo */
+        .hp-bar-outer {
+            width: 100%;
+            height: 24px;
+            background: rgba(0, 0, 0, 0.78);
+            border: 2px solid #fff;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+            transform: skewX(-12deg);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+        }
+
+        .hud-side.p2 .hp-bar-outer {
+            transform: skewX(12deg);
+        }
+
+        .hp-bar-damage {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background: #ffae00;
+            transition: width 0.45s ease-out;
+        }
+
+        .hud-side.p2 .hp-bar-damage {
+            left: auto;
+            right: 0;
+        }
+
+        .hp-bar-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #00e676, #b2ff59);
+            transition: width 0.08s linear;
+        }
+
+        .hud-side.p2 .hp-bar-fill {
+            left: auto;
+            right: 0;
+            background: linear-gradient(270deg, #00e676, #b2ff59);
+        }
+
+        .hp-bar-fill.low {
+            background: linear-gradient(90deg, #ff003c, #ff6e40) !important;
+        }
+
+        /* Barra de Especial / Energia */
+        .energy-bar-outer {
+            width: 82%;
+            height: 11px;
+            background: rgba(0, 0, 0, 0.75);
+            border: 1px solid rgba(255,255,255,0.6);
+            border-radius: 3px;
+            position: relative;
+            overflow: hidden;
+            transform: skewX(-12deg);
+        }
+
+        .hud-side.p2 .energy-bar-outer {
+            margin-left: auto;
+            transform: skewX(12deg);
+        }
+
+        .energy-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #00b0ff, var(--blue-neon));
+            transition: width 0.1s linear;
+        }
+
+        .energy-bar-fill.ready {
+            background: linear-gradient(90deg, #ff003c, var(--gold-neon));
+            box-shadow: 0 0 12px var(--gold-neon);
+            animation: pulseBar 0.6s infinite alternate;
+        }
+
+        @keyframes pulseBar {
+            from { filter: brightness(1); }
+            to { filter: brightness(1.35); }
+        }
+
+        /* Relógio Central */
+        .hud-timer-box {
+            background: rgba(0, 0, 0, 0.82);
+            border: 2px solid var(--gold-neon);
+            border-radius: 8px;
+            padding: 4px 14px;
+            text-align: center;
+            min-width: 74px;
+            box-shadow: 0 0 18px rgba(0,0,0,0.8);
+        }
+
+        .hud-timer {
+            font-family: var(--font-hero);
+            font-size: 38px;
+            color: var(--gold-neon);
+            line-height: 1;
+            letter-spacing: 2px;
+        }
+
+        .hud-round-label {
+            font-size: 11px;
+            font-weight: 800;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Anúncios de Round / KO no centro da tela */
+        .center-announcer {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        .announcer-text {
+            font-family: var(--font-hero);
+            font-size: 86px;
+            color: var(--gold-neon);
+            text-shadow: 4px 4px 0px var(--red-neon), 0 0 30px rgba(0,0,0,0.95);
+            letter-spacing: 4px;
+            text-align: center;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .announcer-text.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Modal de Fim de Luta */
+        .post-match-modal {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.82);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            z-index: 30;
+        }
+
+        .post-match-modal.active {
+            display: flex;
+        }
+
+        .winner-title {
+            font-family: var(--font-hero);
+            font-size: 64px;
+            color: white;
+            text-shadow: 3px 3px 0 var(--red-neon);
+            margin: 0;
+            letter-spacing: 3px;
+            text-align: center;
+        }
+
+        .winner-sub {
+            font-size: 20px;
+            color: var(--blue-neon);
+            margin: 0 0 12px 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 700;
+        }
+
+        /* Barra de Controles e Botões Touch */
+        .controls-bar {
+            width: 100%;
+            background: var(--panel-bg);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 8px;
+            padding: 10px 16px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .key-group {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .kbd {
+            background: #222838;
+            border: 1px solid var(--blue-neon);
+            color: #fff;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        .kbd.red {
+            border-color: var(--red-neon);
+        }
+
+        /* Controles Touch para Celular/Tablet */
+        .touch-controls {
+            display: none;
+            width: 100%;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 4px;
+        }
+
+        .touch-pad {
+            display: flex;
+            gap: 6px;
+        }
+
+        .touch-btn {
+            background: rgba(255,255,255,0.14);
+            border: 2px solid var(--blue-neon);
+            color: white;
+            font-family: var(--font-hero);
+            font-size: 16px;
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .touch-btn.atk {
+            border-color: var(--red-neon);
+            background: rgba(255, 0, 60, 0.25);
+        }
+
+        @media (max-width: 900px) {
+            .roster-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .vs-preview-container {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            .fighter-preview-card, .fighter-preview-card.p2 {
+                flex-direction: column;
+                text-align: center;
+            }
+            .stats-bars, .fighter-preview-card.p2 .stats-bars {
+                margin: 0 auto;
+            }
+            .touch-controls {
+                display: flex;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Botão para retornar ao seu livraria.html -->
+    <a href="livraria.html" class="btn-voltar">Voltar ao Menu</a>
+    <button id="btn-audio" class="btn-som" onclick="alternarAudio()">Som: Ligado</button>
+
+    <div class="app-overlay">
+
+        <!-- ==================== 1. TELA DE SELEÇÃO DE HERÓIS ==================== -->
+        <section id="select-screen">
+            <div class="header-bar">
+                <div>
+                    <h1 class="titulo-arena">O Jogo : Arena Marvel</h1>
+                    <p class="subtitulo-arena">Escolha seu Vingador para o Combate</p>
+                </div>
+
+                <div class="config-partida">
+                    <div class="mode-switch">
+                        <button id="mode-1p" class="mode-btn active" onclick="definirModo(1)">1 Jogador (vs CPU)</button>
+                        <button id="mode-2p" class="mode-btn" onclick="definirModo(2)">2 Jogadores (Local)</button>
+                    </div>
+
+                    <select id="stage-selector" class="stage-select">
+                        <option value="stark">Arena: Torre dos Vingadores</option>
+                        <option value="wakanda">Arena: Wakanda</option>
+                        <option value="asgard">Arena: Ponte Bifrost (Asgard)</option>
+                        <option value="sanctum">Arena: Sanctum Sanctorum</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Painel P1 vs P2 -->
+            <div class="vs-preview-container">
+                <!-- Preview Jogador 1 -->
+                <div class="fighter-preview-card p1">
+                    <div class="preview-canvas-box">
+                        <canvas id="preview-p1" width="90" height="90"></canvas>
+                    </div>
+                    <div class="fighter-info">
+                        <div class="player-tag">Jogador 1</div>
+                        <div id="p1-name" class="fighter-name">Natan</div>
+                        <div id="p1-special" class="fighter-special-desc">Especial: Raio Unibeam Repulsor</div>
+                        <div class="stats-bars">
+                            <div class="stat-line"><span style="width:45px">Força</span><div class="stat-track"><div id="p1-pow" class="stat-fill" style="width:85%"></div></div></div>
+                            <div class="stat-line"><span style="width:45px">Veloc.</span><div class="stat-track"><div id="p1-spd" class="stat-fill" style="width:80%"></div></div></div>
+                            <div class="stat-line"><span style="width:45px">Defesa</span><div class="stat-track"><div id="p1-def" class="stat-fill" style="width:80%"></div></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="vs-badge">VS</div>
+
+                <!-- Preview Jogador 2 / CPU -->
+                <div class="fighter-preview-card p2">
+                    <div class="preview-canvas-box">
+                        <canvas id="preview-p2" width="90" height="90"></canvas>
+                    </div>
+                    <div class="fighter-info">
+                        <div id="p2-tag" class="player-tag">Oponente (CPU)</div>
+                        <div id="p2-name" class="fighter-name">Big Galvas</div>
+                        <div id="p2-special" class="fighter-special-desc">Especial: Onda de Choque Esmagadora</div>
+                        <div class="stats-bars">
+                            <div class="stat-line"><span style="width:45px">Força</span><div class="stat-track"><div id="p2-pow" class="stat-fill" style="width:100%"></div></div></div>
+                            <div class="stat-line"><span style="width:45px">Veloc.</span><div class="stat-track"><div id="p2-spd" class="stat-fill" style="width:65%"></div></div></div>
+                            <div class="stat-line"><span style="width:45px">Defesa</span><div class="stat-track"><div id="p2-def" class="stat-fill" style="width:95%"></div></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="turn-indicator" class="turn-banner">
+                Clique em um herói para selecionar o Jogador 1 (ou clique no botão abaixo para alternar quem escolhe)
+            </div>
+
+            <!-- Grade com os 6 Personagens da Marvel -->
+            <div id="roster-grid" class="roster-grid"></div>
+
+            <div class="select-actions">
+                <button id="btn-switch-selector" class="btn-sec" onclick="alternarSeletor()">Escolhendo: Jogador 1</button>
+                <button class="btn-sec" onclick="selecionarAleatorio()">Heróis Aleatórios</button>
+                <button class="btn-lutar" onclick="iniciarPartida()">Iniciar Combate!</button>
+            </div>
+        </section>
+
+        <!-- ==================== 2. TELA DE BATALHA ==================== -->
+        <section id="battle-screen">
+            <div class="arena-wrapper">
+                <!-- HUD de Vida, Energia e Tempo -->
+                <div class="hud-overlay">
+                    <!-- Lado Jogador 1 -->
+                    <div class="hud-side p1">
+                        <div class="hud-top-row">
+                            <span id="hud-p1-name" class="hud-char-name">Natan</span>
+                            <div class="round-dots">
+                                <div id="p1-dot-1" class="round-dot"></div>
+                                <div id="p1-dot-2" class="round-dot"></div>
+                            </div>
+                        </div>
+                        <div class="hp-bar-outer">
+                            <div id="hud-p1-dmg" class="hp-bar-damage"></div>
+                            <div id="hud-p1-hp" class="hp-bar-fill"></div>
+                        </div>
+                        <div class="energy-bar-outer">
+                            <div id="hud-p1-energy" class="energy-bar-fill"></div>
+                        </div>
+                    </div>
+
+                    <!-- Cronômetro Central -->
+                    <div class="hud-timer-box">
+                        <div id="hud-round-text" class="hud-round-label">Round 1</div>
+                        <div id="hud-timer" class="hud-timer">99</div>
+                    </div>
+
+                    <!-- Lado Jogador 2 -->
+                    <div class="hud-side p2">
+                        <div class="hud-top-row">
+                            <span id="hud-p2-name" class="hud-char-name">Big Galvas</span>
+                            <div class="round-dots">
+                                <div id="p2-dot-1" class="round-dot"></div>
+                                <div id="p2-dot-2" class="round-dot"></div>
+                            </div>
+                        </div>
+                        <div class="hp-bar-outer">
+                            <div id="hud-p2-dmg" class="hp-bar-damage"></div>
+                            <div id="hud-p2-hp" class="hp-bar-fill"></div>
+                        </div>
+                        <div class="energy-bar-outer">
+                            <div id="hud-p2-energy" class="energy-bar-fill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Anunciador de Round / Fight / KO -->
+                <div class="center-announcer">
+                    <div id="announcer-text" class="announcer-text">ROUND 1</div>
+                </div>
+
+                <!-- Modal de Vitória Final -->
+                <div id="post-match-modal" class="post-match-modal">
+                    <h2 id="winner-title" class="winner-title">NATAN VENCEU!</h2>
+                    <p id="winner-sub" class="winner-sub">Vitória Épica na Arena Marvel</p>
+                    <div class="select-actions">
+                        <button class="btn-lutar" onclick="reiniciarLuta()">Jogar Novamente</button>
+                        <button class="btn-sec" onclick="voltarParaSelecao()">Trocar Personagens</button>
+                    </div>
+                </div>
+
+                <!-- Canvas da Luta -->
+                <canvas id="game-canvas" width="960" height="540"></canvas>
+            </div>
+
+            <!-- Controles Touch para Mobile -->
+            <div class="touch-controls">
+                <div class="touch-pad">
+                    <button class="touch-btn" onpointerdown="setTouchKey('KeyA', true)" onpointerup="setTouchKey('KeyA', false)">◀</button>
+                    <button class="touch-btn" onpointerdown="setTouchKey('KeyW', true)" onpointerup="setTouchKey('KeyW', false)">▲</button>
+                    <button class="touch-btn" onpointerdown="setTouchKey('KeyS', true)" onpointerup="setTouchKey('KeyS', false)">▼</button>
+                    <button class="touch-btn" onpointerdown="setTouchKey('KeyD', true)" onpointerup="setTouchKey('KeyD', false)">▶</button>
+                </div>
+                <div class="touch-pad">
+                    <button class="touch-btn atk" onpointerdown="triggerAttack(1, 'light')">SOCO</button>
+                    <button class="touch-btn atk" onpointerdown="triggerAttack(1, 'heavy')">CHUTE</button>
+                    <button class="touch-btn atk" onpointerdown="triggerAttack(1, 'special')">ESPECIAL</button>
+                </div>
+            </div>
+
+            <!-- Legenda de Comandos do Teclado -->
+            <div class="controls-bar">
+                <div class="key-group">
+                    <strong style="color:var(--blue-neon)">JOGADOR 1:</strong>
+                    <span>Mover/Pular/Defender:</span>
+                    <span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span>
+                    <span>Golpes:</span>
+                    <span class="kbd">F</span> Soco
+                    <span class="kbd">G</span> Forte
+                    <span class="kbd">H</span> Especial (50% Energia)
+                </div>
+
+                <div class="key-group">
+                    <strong style="color:var(--red-neon)">JOGADOR 2:</strong>
+                    <span>Mover/Defender:</span>
+                    <span class="kbd red">Setas</span>
+                    <span>Golpes:</span>
+                    <span class="kbd red">J / Num1</span> Soco
+                    <span class="kbd red">K / Num2</span> Forte
+                    <span class="kbd red">L / Num3</span> Especial
+                </div>
+
+                <button class="btn-sec" style="padding:5px 14px; font-size:14px;" onclick="voltarParaSelecao()">Trocar Herói</button>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        /* ============================================================================
+           SISTEMA DE SOM SINTETIZADO (WEB AUDIO API - SEM ARQUIVOS EXTERNOS)
+           ============================================================================ */
+        let audioAtivo = true;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) audioCtx = new AudioContextClass();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function alternarAudio() {
+            audioAtivo = !audioAtivo;
+            document.getElementById('btn-audio').textContent = audioAtivo ? 'Som: Ligado' : 'Som: Mudo';
+        }
+
+        function tocarSom(tipo) {
+            if (!audioAtivo) return;
+            try {
+                initAudio();
+                if (!audioCtx) return;
+
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (tipo === 'select') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.09);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.09);
+                    osc.start(now);
+                    osc.stop(now + 0.09);
+                } else if (tipo === 'hit') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(170, now);
+                    osc.frequency.exponentialRampToValueAtTime(45, now + 0.12);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
+                    osc.start(now);
+                    osc.stop(now + 0.12);
+                } else if (tipo === 'heavy') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(120, now);
+                    osc.frequency.exponentialRampToValueAtTime(30, now + 0.22);
+                    gain.gain.setValueAtTime(0.32, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.22);
+                    osc.start(now);
+                    osc.stop(now + 0.22);
+                } else if (tipo === 'special') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(920, now + 0.18);
+                    osc.frequency.exponentialRampToValueAtTime(180, now + 0.42);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.42);
+                    osc.start(now);
+                    osc.stop(now + 0.42);
+                } else if (tipo === 'ko') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(240, now);
+                    osc.frequency.exponentialRampToValueAtTime(38, now + 0.65);
+                    gain.gain.setValueAtTime(0.4, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.65);
+                    osc.start(now);
+                    osc.stop(now + 0.65);
+                }
+            } catch (e) {
+                // Ignora bloqueio de autoplay do navegador
+            }
+        }
+
+        /* ============================================================================
+           CATÁLOGO DE PERSONAGENS DA MARVEL
+           ============================================================================ */
+        const MARVEL_HEROES = [
+            {
+                id: 'ironman',
+                nome: 'Natan',
+                classe: 'Tecnológico / Laser',
+                especialNome: 'Raio Unibeam Repulsor',
+                corPrimaria: '#d9142b',
+                corSecundaria: '#f5b700',
+                corDetalhe: '#00f6ff',
+                velocidade: 6.2,
+                forca: 1.0,
+                defesa: 0.9,
+                escala: 1.0,
+                statsUI: { pow: 88, spd: 82, def: 80 },
+                projTipo: 'laser'
+            },
+            {
+                id: 'spiderman',
+                nome: 'Homem-Sergio',
+                classe: 'Ágil / Acrobata',
+                especialNome: 'Disparo Duplo de Teia',
+                corPrimaria: '#e6192e',
+                corSecundaria: '#123985',
+                corDetalhe: '#ffffff',
+                velocidade: 7.4,
+                forca: 0.9,
+                defesa: 0.85,
+                escala: 0.96,
+                statsUI: { pow: 78, spd: 98, def: 75 },
+                projTipo: 'web'
+            },
+            {
+                id: 'wolverine',
+                nome: 'Marchirini',
+                classe: 'Cortante / Berserker',
+                especialNome: 'Fúria Adamantium (X-Slash)',
+                corPrimaria: '#f7c600',
+                corSecundaria: '#1b365d',
+                corDetalhe: '#d9e3f0',
+                velocidade: 6.8,
+                forca: 1.08,
+                defesa: 0.95,
+                escala: 0.94,
+                statsUI: { pow: 92, spd: 88, def: 88 },
+                projTipo: 'slash'
+            },
+            {
+                id: 'hulk',
+                nome: 'Big Galvas',
+                classe: 'Colosso Esmagador',
+                especialNome: 'Big Galvas Esmaga (Onda Gama)',
+                corPrimaria: '#2e9e35',
+                corSecundaria: '#582c83',
+                corDetalhe: '#76ff03',
+                velocidade: 5.0,
+                forca: 1.25,
+                defesa: 1.15,
+                escala: 1.22,
+                statsUI: { pow: 100, spd: 65, def: 98 },
+                projTipo: 'gamma'
+            },
+            {
+                id: 'captain',
+                nome: 'Cacetto',
+                classe: 'Tático / Defensor',
+                especialNome: 'Arremesso de Escudo Vibranium',
+                corPrimaria: '#17469e',
+                corSecundaria: '#c8102e',
+                corDetalhe: '#ffffff',
+                velocidade: 6.3,
+                forca: 1.0,
+                defesa: 1.05,
+                escala: 1.02,
+                statsUI: { pow: 85, spd: 84, def: 94 },
+                projTipo: 'shield'
+            },
+            {
+                id: 'thor',
+                nome: 'Nicolas',
+                classe: 'Deus do Trovão',
+                especialNome: 'Tempestade Mjolnir',
+                corPrimaria: '#28334a',
+                corSecundaria: '#c8102e',
+                corDetalhe: '#7df9ff',
+                velocidade: 5.9,
+                forca: 1.15,
+                defesa: 1.05,
+                escala: 1.08,
+                statsUI: { pow: 96, spd: 78, def: 90 },
+                projTipo: 'lightning'
+            }
+        ];
+
+        /* ============================================================================
+           ESTADO DE SELEÇÃO E CONFIGURAÇÃO
+           ============================================================================ */
+        let modoJogo = 1; // 1 = vs CPU, 2 = 2 Jogadores
+        let p1Index = 0;  // Homem de Ferro
+        let p2Index = 3;  // Hulk
+        let quemEscolhe = 1; // 1 ou 2
+
+        function renderizarGradeSelecao() {
+            const grid = document.getElementById('roster-grid');
+            grid.innerHTML = '';
+
+            MARVEL_HEROES.forEach((heroi, idx) => {
+                const slot = document.createElement('div');
+                let classes = 'char-slot';
+                if (idx === p1Index && idx === p2Index) classes += ' selected-both';
+                else if (idx === p1Index) classes += ' selected-p1';
+                else if (idx === p2Index) classes += ' selected-p2';
+                slot.className = classes;
+
+                slot.onclick = () => escolherPersonagem(idx);
+
+                const badges = document.createElement('div');
+                badges.className = 'slot-badges';
+                if (idx === p1Index) {
+                    const b1 = document.createElement('span');
+                    b1.className = 'badge-p badge-p1';
+                    b1.textContent = 'P1';
+                    badges.appendChild(b1);
+                }
+                if (idx === p2Index) {
+                    const b2 = document.createElement('span');
+                    b2.className = 'badge-p badge-p2';
+                    b2.textContent = modoJogo === 1 ? 'CPU' : 'P2';
+                    badges.appendChild(b2);
+                }
+
+                const miniCanvas = document.createElement('canvas');
+                miniCanvas.width = 75;
+                miniCanvas.height = 75;
+                desenharRetratoHeroi(miniCanvas.getContext('2d'), heroi, 37.5, 65, 0.72, 1);
+
+                const nomeEl = document.createElement('div');
+                nomeEl.className = 'char-slot-name';
+                nomeEl.textContent = heroi.nome;
+
+                const roleEl = document.createElement('div');
+                roleEl.className = 'char-slot-role';
+                roleEl.textContent = heroi.classe;
+
+                slot.appendChild(badges);
+                slot.appendChild(miniCanvas);
+                slot.appendChild(nomeEl);
+                slot.appendChild(roleEl);
+                grid.appendChild(slot);
+            });
+
+            atualizarPainelPreview();
+        }
+
+        function escolherPersonagem(idx) {
+            tocarSom('select');
+            if (quemEscolhe === 1) {
+                p1Index = idx;
+                quemEscolhe = 2;
+            } else {
+                p2Index = idx;
+                quemEscolhe = 1;
+            }
+            atualizarBotaoSeletor();
+            renderizarGradeSelecao();
+        }
+
+        function alternarSeletor() {
+            quemEscolhe = quemEscolhe === 1 ? 2 : 1;
+            tocarSom('select');
+            atualizarBotaoSeletor();
+        }
+
+        function atualizarBotaoSeletor() {
+            const label = quemEscolhe === 1 ? 'Escolhendo: Jogador 1' : (modoJogo === 1 ? 'Escolhendo: Oponente (CPU)' : 'Escolhendo: Jogador 2');
+            document.getElementById('btn-switch-selector').textContent = label;
+            document.getElementById('turn-indicator').textContent =
+                quemEscolhe === 1
+                ? 'Vez do JOGADOR 1 escolher o seu Herói na lista abaixo'
+                : (modoJogo === 1 ? 'Agora clique no Herói que será seu OPONENTE (CPU)' : 'Vez do JOGADOR 2 escolher o seu Herói');
+        }
+
+        function definirModo(m) {
+            modoJogo = m;
+            tocarSom('select');
+            document.getElementById('mode-1p').classList.toggle('active', m === 1);
+            document.getElementById('mode-2p').classList.toggle('active', m === 2);
+            document.getElementById('p2-tag').textContent = m === 1 ? 'Oponente (CPU)' : 'Jogador 2';
+            atualizarBotaoSeletor();
+            renderizarGradeSelecao();
+        }
+
+        function selecionarAleatorio() {
+            tocarSom('select');
+            p1Index = Math.floor(Math.random() * MARVEL_HEROES.length);
+            p2Index = Math.floor(Math.random() * MARVEL_HEROES.length);
+            renderizarGradeSelecao();
+        }
+
+        function atualizarPainelPreview() {
+            const h1 = MARVEL_HEROES[p1Index];
+            const h2 = MARVEL_HEROES[p2Index];
+
+            document.getElementById('p1-name').textContent = h1.nome;
+            document.getElementById('p1-special').textContent = 'Especial: ' + h1.especialNome;
+            document.getElementById('p1-pow').style.width = h1.statsUI.pow + '%';
+            document.getElementById('p1-spd').style.width = h1.statsUI.spd + '%';
+            document.getElementById('p1-def').style.width = h1.statsUI.def + '%';
+
+            document.getElementById('p2-name').textContent = h2.nome;
+            document.getElementById('p2-special').textContent = 'Especial: ' + h2.especialNome;
+            document.getElementById('p2-pow').style.width = h2.statsUI.pow + '%';
+            document.getElementById('p2-spd').style.width = h2.statsUI.spd + '%';
+            document.getElementById('p2-def').style.width = h2.statsUI.def + '%';
+
+            const c1 = document.getElementById('preview-p1').getContext('2d');
+            c1.clearRect(0, 0, 90, 90);
+            desenharRetratoHeroi(c1, h1, 45, 78, 0.85, 1);
+
+            const c2 = document.getElementById('preview-p2').getContext('2d');
+            c2.clearRect(0, 0, 90, 90);
+            desenharRetratoHeroi(c2, h2, 45, 78, 0.85, -1);
+        }
+
+        /* ============================================================================
+           RENDERIZADOR DE PERSONAGENS MARVEL (SPRITES VETORIAIS NO CANVAS)
+           ============================================================================ */
+        function desenharRetratoHeroi(ctx, heroi, x, y, escala, direcao) {
+            const bonecoTemp = {
+                heroi: heroi,
+                x: x,
+                y: y,
+                direcao: direcao,
+                agachado: false,
+                defendendo: false,
+                atacando: false,
+                tipoAtaque: null,
+                frameAnim: 0,
+                hitStun: 0
+            };
+            desenharLutador(ctx, bonecoTemp, escala);
+        }
+
+        function desenharLutador(ctx, lutador, escalaOverride = null) {
+            const h = lutador.heroi;
+            const esc = (escalaOverride !== null ? escalaOverride : h.escala);
+            const agachadoOffset = lutador.agachado ? 18 : 0;
+
+            ctx.save();
+            ctx.translate(lutador.x, lutador.y);
+            ctx.scale(lutador.direcao * esc, esc);
+
+            if (lutador.hitStun > 0 && Math.floor(lutador.hitStun / 2) % 2 === 0) {
+                ctx.filter = 'brightness(2.2)';
+            }
+
+            // Sombra no chão
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 26, 7, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            const resp = Math.sin(lutador.frameAnim * 0.12) * 2;
+
+            // Capa do Thor
+            if (h.id === 'thor') {
+                ctx.fillStyle = '#c8102e';
+                ctx.beginPath();
+                ctx.moveTo(-10, -68 + agachadoOffset);
+                ctx.lineTo(-28 - Math.abs(resp) * 2, -6);
+                ctx.lineTo(-6, -10);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // Pernas
+            ctx.fillStyle = h.corSecundaria;
+            ctx.fillRect(-14, -32 + agachadoOffset * 0.5, 11, 32 - agachadoOffset * 0.5);
+            ctx.fillRect(4, -32 + agachadoOffset * 0.5, 11, 32 - agachadoOffset * 0.5);
+
+            // Botas
+            ctx.fillStyle = (h.id === 'hulk') ? '#2e9e35' : h.corPrimaria;
+            ctx.fillRect(-15, -10, 13, 10);
+            ctx.fillRect(4, -10, 13, 10);
+
+            // Tronco / Peitoral
+            ctx.fillStyle = h.corPrimaria;
+            ctx.beginPath();
+            ctx.roundRect(-18, -70 + agachadoOffset + resp, 36, 42 - agachadoOffset * 0.5, 6);
+            ctx.fill();
+
+            // Detalhes exclusivos no peito de cada herói
+            if (h.id === 'ironman') {
+                // Reator Arc brilhante
+                ctx.fillStyle = '#00f6ff';
+                ctx.shadowColor = '#00f6ff';
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.arc(4, -52 + agachadoOffset + resp, 6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            } else if (h.id === 'spiderman') {
+                // Emblema da Aranha no peito
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(4, -52 + agachadoOffset + resp, 4, 0, Math.PI * 2);
+                ctx.moveTo(0, -52 + agachadoOffset + resp); ctx.lineTo(-6, -57 + agachadoOffset + resp);
+                ctx.moveTo(8, -52 + agachadoOffset + resp); ctx.lineTo(14, -57 + agachadoOffset + resp);
+                ctx.moveTo(0, -50 + agachadoOffset + resp); ctx.lineTo(-6, -45 + agachadoOffset + resp);
+                ctx.moveTo(8, -50 + agachadoOffset + resp); ctx.lineTo(14, -45 + agachadoOffset + resp);
+                ctx.stroke();
+            } else if (h.id === 'captain') {
+                // Estrela Branca e Listras
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(-14, -42 + agachadoOffset + resp, 28, 12);
+                ctx.fillStyle = '#c8102e';
+                ctx.fillRect(-10, -42 + agachadoOffset + resp, 6, 12);
+                ctx.fillRect(4, -42 + agachadoOffset + resp, 6, 12);
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(4, -55 + agachadoOffset + resp, 5, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (h.id === 'wolverine') {
+                // Listras pretas de tigre
+                ctx.fillStyle = '#111';
+                ctx.fillRect(-16, -62 + agachadoOffset + resp, 9, 4);
+                ctx.fillRect(-16, -52 + agachadoOffset + resp, 11, 4);
+                ctx.fillRect(8, -62 + agachadoOffset + resp, 9, 4);
+                ctx.fillRect(6, -52 + agachadoOffset + resp, 11, 4);
+            } else if (h.id === 'thor') {
+                // Discos metálicos Asgardianos
+                ctx.fillStyle = '#d9e3f0';
+                ctx.beginPath();
+                ctx.arc(-6, -58 + agachadoOffset + resp, 4, 0, Math.PI * 2);
+                ctx.arc(10, -58 + agachadoOffset + resp, 4, 0, Math.PI * 2);
+                ctx.arc(-6, -46 + agachadoOffset + resp, 4, 0, Math.PI * 2);
+                ctx.arc(10, -46 + agachadoOffset + resp, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Cabeça / Capacete / Máscara
+            const headY = -92 + agachadoOffset + resp;
+            if (h.id === 'hulk') {
+                ctx.fillStyle = '#2e9e35';
+                ctx.beginPath();
+                ctx.roundRect(-13, headY, 26, 24, 5);
+                ctx.fill();
+                // Cabelo preto bagunçado do Hulk
+                ctx.fillStyle = '#111';
+                ctx.fillRect(-14, headY - 3, 28, 8);
+                // Olhos furiosos
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(2, headY + 8, 8, 4);
+            } else if (h.id === 'ironman') {
+                ctx.fillStyle = '#d9142b';
+                ctx.beginPath();
+                ctx.roundRect(-12, headY, 24, 23, 6);
+                ctx.fill();
+                // Faceplate dourada
+                ctx.fillStyle = '#f5b700';
+                ctx.fillRect(-4, headY + 3, 15, 18);
+                // Visor brilhante
+                ctx.fillStyle = '#00f6ff';
+                ctx.fillRect(1, headY + 8, 9, 4);
+            } else if (h.id === 'spiderman') {
+                ctx.fillStyle = '#e6192e';
+                ctx.beginPath();
+                ctx.roundRect(-12, headY, 24, 23, 8);
+                ctx.fill();
+                // Lentes brancas com borda preta
+                ctx.fillStyle = '#fff';
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.ellipse(5, headY + 10, 6, 4, -0.2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+            } else if (h.id === 'wolverine') {
+                ctx.fillStyle = '#f7c600';
+                ctx.beginPath();
+                ctx.roundRect(-12, headY, 24, 23, 5);
+                ctx.fill();
+                // Abas pretas pontudas da máscara do Wolverine
+                ctx.fillStyle = '#111';
+                ctx.beginPath();
+                ctx.moveTo(0, headY + 12);
+                ctx.lineTo(18, headY - 6);
+                ctx.lineTo(12, headY + 15);
+                ctx.closePath();
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(3, headY + 8, 7, 4);
+            } else if (h.id === 'captain') {
+                ctx.fillStyle = '#17469e';
+                ctx.beginPath();
+                ctx.roundRect(-12, headY, 24, 23, 6);
+                ctx.fill();
+                // Parte inferior do rosto
+                ctx.fillStyle = '#ffccb3';
+                ctx.fillRect(0, headY + 13, 12, 9);
+                // Letra A na testa
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 10px Arial';
+                ctx.fillText('A', 2, headY + 9);
+            } else if (h.id === 'thor') {
+                // Cabelo loiro + Elmo com asas
+                ctx.fillStyle = '#f5d033';
+                ctx.fillRect(-14, headY + 6, 12, 18);
+                ctx.fillStyle = '#ffccb3';
+                ctx.beginPath();
+                ctx.roundRect(-11, headY + 2, 23, 21, 5);
+                ctx.fill();
+                ctx.fillStyle = '#c0c8d8';
+                ctx.fillRect(-12, headY - 2, 24, 9);
+                // Asa branca do elmo
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.moveTo(-2, headY + 2);
+                ctx.lineTo(-14, headY - 10);
+                ctx.lineTo(4, headY - 2);
+                ctx.fill();
+                // Olhos de trovão
+                ctx.fillStyle = '#7df9ff';
+                ctx.fillRect(3, headY + 9, 7, 4);
+            }
+
+            // Braços e Golpes
+            const alcanceGolpe = lutador.atacando ? (lutador.tipoAtaque === 'heavy' ? 28 : 20) : 0;
+            ctx.fillStyle = h.corPrimaria;
+            ctx.fillRect(4, -64 + agachadoOffset + resp, 16 + alcanceGolpe, 11);
+
+            // Armas / Acessórios nos punhos
+            if (h.id === 'wolverine') {
+                // 3 Garras de Adamantium
+                ctx.strokeStyle = '#e5eef8';
+                ctx.lineWidth = 2;
+                const clawX = 20 + alcanceGolpe;
+                const clawY = -63 + agachadoOffset + resp;
+                for (let c = 0; c < 3; c++) {
+                    ctx.beginPath();
+                    ctx.moveTo(clawX, clawY + c * 4);
+                    ctx.lineTo(clawX + 15, clawY + c * 4 - 2);
+                    ctx.stroke();
+                }
+            } else if (h.id === 'captain') {
+                // Escudo do Capitão América no braço
+                const shX = 16 + alcanceGolpe;
+                const shY = -56 + agachadoOffset + resp;
+                ctx.fillStyle = '#c8102e';
+                ctx.beginPath();
+                ctx.arc(shX, shY, 15, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(shX, shY, 10, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#17469e';
+                ctx.beginPath();
+                ctx.arc(shX, shY, 6, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (h.id === 'thor') {
+                // Martelo Mjolnir
+                const mjX = 18 + alcanceGolpe;
+                const mjY = -66 + agachadoOffset + resp;
+                ctx.fillStyle = '#6b4423';
+                ctx.fillRect(mjX, mjY, 4, 14);
+                ctx.fillStyle = '#9aa5b8';
+                ctx.fillRect(mjX - 6, mjY - 10, 16, 11);
+            }
+
+            // Escudo de Bloqueio quando estiver defendendo
+            if (lutador.defendendo) {
+                ctx.strokeStyle = '#00f6ff';
+                ctx.lineWidth = 3;
+                ctx.fillStyle = 'rgba(0, 246, 255, 0.22)';
+                ctx.beginPath();
+                ctx.arc(10, -45 + agachadoOffset, 38, -Math.PI * 0.45, Math.PI * 0.45);
+                ctx.stroke();
+                ctx.fill();
+            }
+
+            ctx.restore();
+        }
+
+        /* ============================================================================
+           MOTOR DE JOGO E COMBATE (STREET FIGHTER STYLE)
+           ============================================================================ */
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const CHAO_Y = 465;
+        const GRAVIDADE = 0.72;
+
+        let loopAtivo = false;
+        let animFrameId = null;
+        let timerIntervalId = null;
+
+        let roundAtual = 1;
+        let tempoRestante = 99;
+        let lutaLiberada = false;
+        let shakeTela = 0;
+
+        let p1 = null;
+        let p2 = null;
+        let projeteis = [];
+        let particulas = [];
+        let textosFlutuantes = [];
+
+        const teclas = {};
+
+        window.addEventListener('keydown', (e) => {
+            teclas[e.code] = true;
+            if (!lutaLiberada) return;
+
+            // Golpes Jogador 1
+            if (e.code === 'KeyF') triggerAttack(1, 'light');
+            if (e.code === 'KeyG') triggerAttack(1, 'heavy');
+            if (e.code === 'KeyH') triggerAttack(1, 'special');
+
+            // Golpes Jogador 2 (Modo 2P)
+            if (modoJogo === 2) {
+                if (e.code === 'KeyJ' || e.code === 'Numpad1') triggerAttack(2, 'light');
+                if (e.code === 'KeyK' || e.code === 'Numpad2') triggerAttack(2, 'heavy');
+                if (e.code === 'KeyL' || e.code === 'Numpad3') triggerAttack(2, 'special');
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            teclas[e.code] = false;
+        });
+
+        function setTouchKey(code, state) {
+            teclas[code] = state;
+        }
+
+        function criarLutador(heroi, xInicial, direcao, jogadorNum) {
+            return {
+                jogador: jogadorNum,
+                heroi: heroi,
+                x: xInicial,
+                y: CHAO_Y,
+                vx: 0,
+                vy: 0,
+                direcao: direcao,
+                hp: 100,
+                maxHp: 100,
+                energia: 25,
+                maxEnergia: 100,
+                vitoriasRound: 0,
+                noChao: true,
+                agachado: false,
+                defendendo: false,
+                atacando: false,
+                tipoAtaque: null,
+                timerAtaque: 0,
+                cooldownAtaque: 0,
+                jaAcertouGolpe: false,
+                hitStun: 0,
+                comboAtual: 0,
+                frameAnim: 0
+            };
+        }
+
+        function iniciarPartida() {
+            tocarSom('select');
+            document.getElementById('select-screen').style.display = 'none';
+            document.getElementById('battle-screen').style.display = 'flex';
+            document.getElementById('post-match-modal').classList.remove('active');
+
+            const h1 = MARVEL_HEROES[p1Index];
+            const h2 = MARVEL_HEROES[p2Index];
+
+            p1 = criarLutador(h1, 220, 1, 1);
+            p2 = criarLutador(h2, 740, -1, 2);
+
+            document.getElementById('hud-p1-name').textContent = h1.nome;
+            document.getElementById('hud-p2-name').textContent = h2.nome;
+
+            roundAtual = 1;
+            atualizarBolinhasRound();
+            iniciarRound();
+
+            if (!loopAtivo) {
+                loopAtivo = true;
+                gameLoop();
+            }
+        }
+
+        function iniciarRound() {
+            lutaLiberada = false;
+            tempoRestante = 99;
+            projeteis = [];
+            particulas = [];
+            textosFlutuantes = [];
+
+            p1.x = 220; p1.y = CHAO_Y; p1.vx = 0; p1.vy = 0;
+            p1.hp = 100; p1.hitStun = 0; p1.atacando = false; p1.direcao = 1;
+
+            p2.x = 740; p2.y = CHAO_Y; p2.vx = 0; p2.vy = 0;
+            p2.hp = 100; p2.hitStun = 0; p2.atacando = false; p2.direcao = -1;
+
+            document.getElementById('hud-round-text').textContent = 'ROUND ' + roundAtual;
+            document.getElementById('hud-timer').textContent = tempoRestante;
+            atualizarHUD();
+
+            mostrarAnuncio('ROUND ' + roundAtual, 1100, () => {
+                tocarSom('special');
+                mostrarAnuncio('LUTEM!', 750, () => {
+                    lutaLiberada = true;
+                });
+            });
+
+            if (timerIntervalId) clearInterval(timerIntervalId);
+            timerIntervalId = setInterval(() => {
+                if (!lutaLiberada) return;
+                if (tempoRestante > 0) {
+                    tempoRestante--;
+                    document.getElementById('hud-timer').textContent = tempoRestante;
+                    if (tempoRestante === 0) {
+                        verificarVencedorPorTempo();
+                    }
+                }
+            }, 1000);
+        }
+
+        function mostrarAnuncio(texto, duracao, callback) {
+            const el = document.getElementById('announcer-text');
+            el.textContent = texto;
+            el.classList.add('show');
+            setTimeout(() => {
+                el.classList.remove('show');
+                if (callback) setTimeout(callback, 200);
+            }, duracao);
+        }
+
+        function triggerAttack(numJogador, tipo) {
+            if (!lutaLiberada) return;
+            const lutador = numJogador === 1 ? p1 : p2;
+            if (lutador.hitStun > 0 || lutador.atacando || lutador.cooldownAtaque > 0) return;
+
+            if (tipo === 'special') {
+                if (lutador.energia < 50) {
+                    adicionarTextoFlutuante(lutador.x, lutador.y - 105, 'SEM ENERGIA!', '#add8e6');
+                    return;
+                }
+                lutador.energia -= 50;
+                lutador.atacando = true;
+                lutador.tipoAtaque = 'special';
+                lutador.timerAtaque = 22;
+                lutador.cooldownAtaque = 28;
+                lutador.jaAcertouGolpe = true;
+                tocarSom('special');
+                dispararEspecialMarvel(lutador);
+                atualizarHUD();
+                return;
+            }
+
+            lutador.atacando = true;
+            lutador.tipoAtaque = tipo;
+            lutador.timerAtaque = tipo === 'light' ? 12 : 18;
+            lutador.cooldownAtaque = tipo === 'light' ? 15 : 24;
+            lutador.jaAcertouGolpe = false;
+
+            // Avanço rápido com as garras do Wolverine
+            if (lutador.heroi.id === 'wolverine' && tipo === 'heavy') {
+                lutador.vx = lutador.direcao * 9;
+            }
+        }
+
+        function dispararEspecialMarvel(lutador) {
+            const h = lutador.heroi;
+            adicionarTextoFlutuante(lutador.x, lutador.y - 115, h.especialNome.toUpperCase() + '!', '#ffcc00');
+            shakeTela = 8;
+
+            projeteis.push({
+                dono: lutador.jogador,
+                tipo: h.projTipo,
+                x: lutador.x + lutador.direcao * 42,
+                y: lutador.y - 54,
+                vx: lutador.direcao * (h.projTipo === 'laser' ? 16 : 11.5),
+                raio: h.projTipo === 'gamma' ? 32 : 20,
+                cor: h.corDetalhe,
+                corSec: h.corPrimaria,
+                dano: 22 * h.forca,
+                vida: 75
+            });
+        }
+
+        function atualizarFisicaLutador(lutador, oponente, controles) {
+            lutador.frameAnim++;
+
+            if (lutador.cooldownAtaque > 0) lutador.cooldownAtaque--;
+
+            if (lutador.hitStun > 0) {
+                lutador.hitStun--;
+                lutador.x += lutador.vx;
+                lutador.vx *= 0.82;
+            } else if (lutaLiberada) {
+                lutador.agachado = controles.down && lutador.noChao;
+                lutador.defendendo = controles.down && !lutador.atacando;
+
+                if (!lutador.atacando && !lutador.agachado) {
+                    if (controles.left) {
+                        lutador.vx = -lutador.heroi.velocidade;
+                    } else if (controles.right) {
+                        lutador.vx = lutador.heroi.velocidade;
+                    } else {
+                        lutador.vx *= 0.75;
+                    }
+
+                    if (controles.up && lutador.noChao) {
+                        lutador.vy = -15.5;
+                        lutador.noChao = false;
+                    }
+                } else {
+                    lutador.vx *= 0.75;
+                }
+
+                lutador.x += lutador.vx;
+            }
+
+            // Gravidade
+            if (!lutador.noChao) {
+                lutador.y += lutador.vy;
+                lutador.vy += GRAVIDADE;
+                if (lutador.y >= CHAO_Y) {
+                    lutador.y = CHAO_Y;
+                    lutador.vy = 0;
+                    lutador.noChao = true;
+                }
+            }
+
+            // Limites da Arena
+            if (lutador.x < 50) lutador.x = 50;
+            if (lutador.x > canvas.width - 50) lutador.x = canvas.width - 50;
+
+            // Sempre olhar para o oponente quando não estiver atacando
+            if (!lutador.atacando) {
+                lutador.direcao = (oponente.x >= lutador.x) ? 1 : -1;
+            }
+
+            // Colisão de Ataque Corpo a Corpo
+            if (lutador.atacando) {
+                lutador.timerAtaque--;
+                if (!lutador.jaAcertouGolpe && lutador.timerAtaque > 3) {
+                    const alcance = lutador.tipoAtaque === 'heavy' ? 86 : 68;
+                    const distX = (oponente.x - lutador.x) * lutador.direcao;
+                    const distY = Math.abs(oponente.y - lutador.y);
+
+                    if (distX > -10 && distX <= alcance && distY < 75) {
+                        lutador.jaAcertouGolpe = true;
+                        const danoBase = lutador.tipoAtaque === 'heavy' ? 12 : 7;
+                        aplicarDano(lutador, oponente, danoBase * lutador.heroi.forca, lutador.tipoAtaque === 'heavy');
+                    }
+                }
+                if (lutador.timerAtaque <= 0) {
+                    lutador.atacando = false;
+                    lutador.tipoAtaque = null;
+                }
+            }
+        }
+
+        function atualizarIA() {
+            if (!lutaLiberada || p2.hitStun > 0) {
+                return { left: false, right: false, up: false, down: false };
+            }
+
+            const dist = p1.x - p2.x;
+            const absDist = Math.abs(dist);
+            const ctrl = { left: false, right: false, up: false, down: false };
+
+            // IA se aproxima ou defende ou ataca
+            if (absDist > 165) {
+                if (p2.energia >= 50 && Math.random() < 0.03) {
+                    triggerAttack(2, 'special');
+                } else {
+                    if (dist < 0) ctrl.left = true;
+                    else ctrl.right = true;
+                }
+            } else if (absDist > 75) {
+                if (Math.random() < 0.6) {
+                    if (dist < 0) ctrl.left = true;
+                    else ctrl.right = true;
+                } else if (Math.random() < 0.025 && p2.noChao) {
+                    ctrl.up = true;
+                }
+            } else {
+                // Curta distância: ataca ou defende
+                if (p1.atacando && Math.random() < 0.38) {
+                    ctrl.down = true;
+                } else if (Math.random() < 0.08) {
+                    triggerAttack(2, Math.random() < 0.65 ? 'light' : 'heavy');
+                }
+            }
+
+            return ctrl;
+        }
+
+        function aplicarDano(atacante, defensor, danoBruto, golpeForte) {
+            let danoFinal = danoBruto / defensor.heroi.defesa;
+
+            if (defensor.defendendo) {
+                danoFinal *= 0.25;
+                defensor.vx = atacante.direcao * 4;
+                tocarSom('select');
+                criarParticulasImpacto(defensor.x, defensor.y - 50, '#00f6ff', 8);
+                adicionarTextoFlutuante(defensor.x, defensor.y - 90, 'DEFENDEU!', '#00f6ff');
+            } else {
+                defensor.hitStun = golpeForte ? 18 : 11;
+                defensor.atacando = false;
+                defensor.vx = atacante.direcao * (golpeForte ? 10 : 5.5);
+                if (golpeForte) {
+                    shakeTela = 7;
+                    tocarSom('heavy');
+                } else {
+                    tocarSom('hit');
+                }
+                atacante.comboAtual++;
+                criarParticulasImpacto(defensor.x, defensor.y - 52, atacante.heroi.corDetalhe, golpeForte ? 18 : 10);
+                const msg = golpeForte ? 'SMASH! -' + Math.round(danoFinal) : 'HIT! -' + Math.round(danoFinal);
+                adicionarTextoFlutuante(defensor.x, defensor.y - 95, msg, '#ff003c');
+            }
+
+            defensor.hp = Math.max(0, defensor.hp - danoFinal);
+            atacante.energia = Math.min(100, atacante.energia + 12);
+            defensor.energia = Math.min(100, defensor.energia + 7);
+
+            atualizarHUD();
+
+            if (defensor.hp <= 0 && lutaLiberada) {
+                encerrarRound(atacante);
+            }
+        }
+
+        function atualizarProjeteis() {
+            for (let i = projeteis.length - 1; i >= 0; i--) {
+                const pr = projeteis[i];
+                pr.x += pr.vx;
+                pr.vida--;
+
+                const alvo = pr.dono === 1 ? p2 : p1;
+                const atacante = pr.dono === 1 ? p1 : p2;
+
+                if (Math.abs(pr.x - alvo.x) < pr.raio + 24 && Math.abs(pr.y - (alvo.y - 48)) < 48) {
+                    aplicarDano(atacante, alvo, pr.dano, true);
+                    projeteis.splice(i, 1);
+                    continue;
+                }
+
+                if (pr.vida <= 0 || pr.x < 0 || pr.x > canvas.width) {
+                    projeteis.splice(i, 1);
+                }
+            }
+        }
+
+        function criarParticulasImpacto(x, y, cor, qtd) {
+            for (let i = 0; i < qtd; i++) {
+                particulas.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 12,
+                    vy: (Math.random() - 0.5) * 12,
+                    raio: Math.random() * 5 + 2,
+                    cor: cor,
+                    vida: 18
+                });
+            }
+        }
+
+        function adicionarTextoFlutuante(x, y, texto, cor) {
+            textosFlutuantes.push({
+                x: x,
+                y: y,
+                texto: texto,
+                cor: cor,
+                vida: 35
+            });
+        }
+
+        function verificarVencedorPorTempo() {
+            if (!lutaLiberada) return;
+            if (p1.hp >= p2.hp) encerrarRound(p1);
+            else encerrarRound(p2);
+        }
+
+        function encerrarRound(vencedor) {
+            lutaLiberada = false;
+            tocarSom('ko');
+            shakeTela = 14;
+            vencedor.vitoriasRound++;
+            atualizarBolinhasRound();
+
+            mostrarAnuncio('K.O.!', 1600, () => {
+                if (vencedor.vitoriasRound >= 2) {
+                    mostrarTelaVitoria(vencedor);
+                } else {
+                    roundAtual++;
+                    iniciarRound();
+                }
+            });
+        }
+
+        function atualizarBolinhasRound() {
+            document.getElementById('p1-dot-1').classList.toggle('won', p1.vitoriasRound >= 1);
+            document.getElementById('p1-dot-2').classList.toggle('won', p1.vitoriasRound >= 2);
+            document.getElementById('p2-dot-1').classList.toggle('won', p2.vitoriasRound >= 1);
+            document.getElementById('p2-dot-2').classList.toggle('won', p2.vitoriasRound >= 2);
+        }
+
+        function mostrarTelaVitoria(vencedor) {
+            const modal = document.getElementById('post-match-modal');
+            const titulo = document.getElementById('winner-title');
+            const sub = document.getElementById('winner-sub');
+
+            titulo.textContent = vencedor.heroi.nome.toUpperCase() + ' VENCEU!';
+            sub.textContent = (vencedor.jogador === 1 ? 'Vitória do Jogador 1' : (modoJogo === 1 ? 'Vitória da CPU' : 'Vitória do Jogador 2'));
+            modal.classList.add('active');
+        }
+
+        function reiniciarLuta() {
+            iniciarPartida();
+        }
+
+        function voltarParaSelecao() {
+            lutaLiberada = false;
+            if (timerIntervalId) clearInterval(timerIntervalId);
+            document.getElementById('battle-screen').style.display = 'none';
+            document.getElementById('select-screen').style.display = 'flex';
+            renderizarGradeSelecao();
+        }
+
+        function atualizarHUD() {
+            if (!p1 || !p2) return;
+            const p1HpEl = document.getElementById('hud-p1-hp');
+            const p2HpEl = document.getElementById('hud-p2-hp');
+
+            p1HpEl.style.width = p1.hp + '%';
+            document.getElementById('hud-p1-dmg').style.width = p1.hp + '%';
+            p1HpEl.classList.toggle('low', p1.hp < 30);
+
+            p2HpEl.style.width = p2.hp + '%';
+            document.getElementById('hud-p2-dmg').style.width = p2.hp + '%';
+            p2HpEl.classList.toggle('low', p2.hp < 30);
+
+            const e1 = document.getElementById('hud-p1-energy');
+            const e2 = document.getElementById('hud-p2-energy');
+            e1.style.width = p1.energia + '%';
+            e2.style.width = p2.energia + '%';
+            e1.classList.toggle('ready', p1.energia >= 50);
+            e2.classList.toggle('ready', p2.energia >= 50);
+        }
+
+        /* ============================================================================
+           CENÁRIOS DA MARVEL E RENDERIZAÇÃO DO CANVAS
+           ============================================================================ */
+        function desenharCenarioArena() {
+            const stage = document.getElementById('stage-selector').value;
+
+            let skyTop = '#090d16', skyBot = '#1c2541', floorColor = '#141824', accentColor = '#00f6ff';
+            if (stage === 'wakanda') {
+                skyTop = '#120824'; skyBot = '#3a1c71'; floorColor = '#1b112c'; accentColor = '#b388ff';
+            } else if (stage === 'asgard') {
+                skyTop = '#050714'; skyBot = '#1d3557'; floorColor = '#222a3a'; accentColor = '#ffcc00';
+            } else if (stage === 'sanctum') {
+                skyTop = '#1f0812'; skyBot = '#4a1525'; floorColor = '#241118'; accentColor = '#ff5252';
+            }
+
+            const grad = ctx.createLinearGradient(0, 0, 0, CHAO_Y);
+            grad.addColorStop(0, skyTop);
+            grad.addColorStop(1, skyBot);
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, canvas.width, CHAO_Y);
+
+            // Silhueta de prédios / pilares da arena
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+            for (let i = 0; i < 10; i++) {
+                const bh = 110 + (i * 37) % 140;
+                ctx.fillRect(i * 102, CHAO_Y - bh, 75, bh);
+            }
+
+            // Emblema holográfico central da Arena
+            ctx.save();
+            ctx.strokeStyle = accentColor;
+            ctx.globalAlpha = 0.22;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(canvas.width / 2, 230, 85, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.font = 'bold 70px Impact, sans-serif';
+            ctx.fillStyle = accentColor;
+            ctx.textAlign = 'center';
+            ctx.fillText('A', canvas.width / 2, 255);
+            ctx.restore();
+
+            // Piso da Arena
+            ctx.fillStyle = floorColor;
+            ctx.fillRect(0, CHAO_Y, canvas.width, canvas.height - CHAO_Y);
+
+            // Linha neon do piso
+            ctx.strokeStyle = accentColor;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(0, CHAO_Y);
+            ctx.lineTo(canvas.width, CHAO_Y);
+            ctx.stroke();
+        }
+
+        function gameLoop() {
+            if (!loopAtivo) return;
+
+            ctx.save();
+            if (shakeTela > 0) {
+                const dx = (Math.random() - 0.5) * shakeTela * 2;
+                const dy = (Math.random() - 0.5) * shakeTela * 2;
+                ctx.translate(dx, dy);
+                shakeTela *= 0.85;
+                if (shakeTela < 0.5) shakeTela = 0;
+            }
+
+            desenharCenarioArena();
+
+            if (p1 && p2) {
+                const ctrlP1 = {
+                    left: !!teclas['KeyA'],
+                    right: !!teclas['KeyD'],
+                    up: !!teclas['KeyW'],
+                    down: !!teclas['KeyS']
+                };
+
+                const ctrlP2 = modoJogo === 1 ? atualizarIA() : {
+                    left: !!teclas['ArrowLeft'],
+                    right: !!teclas['ArrowRight'],
+                    up: !!teclas['ArrowUp'],
+                    down: !!teclas['ArrowDown']
+                };
+
+                atualizarFisicaLutador(p1, p2, ctrlP1);
+                atualizarFisicaLutador(p2, p1, ctrlP2);
+                atualizarProjeteis();
+
+                desenharLutador(ctx, p1);
+                desenharLutador(ctx, p2);
+
+                // Desenhar Projéteis Especiais
+                projeteis.forEach(pr => {
+                    ctx.save();
+                    ctx.fillStyle = pr.cor;
+                    ctx.shadowColor = pr.cor;
+                    ctx.shadowBlur = 15;
+                    ctx.beginPath();
+                    if (pr.tipo === 'laser') {
+                        ctx.fillRect(pr.x - 30, pr.y - 8, 60, 16);
+                    } else {
+                        ctx.arc(pr.x, pr.y, pr.raio, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    ctx.restore();
+                });
+
+                // Desenhar Partículas
+                for (let i = particulas.length - 1; i >= 0; i--) {
+                    const pt = particulas[i];
+                    pt.x += pt.vx;
+                    pt.y += pt.vy;
+                    pt.vida--;
+                    ctx.fillStyle = pt.cor;
+                    ctx.beginPath();
+                    ctx.arc(pt.x, pt.y, pt.raio, 0, Math.PI * 2);
+                    ctx.fill();
+                    if (pt.vida <= 0) particulas.splice(i, 1);
+                }
+
+                // Desenhar Textos de Impacto ("SMASH!", "HIT!", etc.)
+                for (let i = textosFlutuantes.length - 1; i >= 0; i--) {
+                    const tf = textosFlutuantes[i];
+                    tf.y -= 1.2;
+                    tf.vida--;
+                    ctx.save();
+                    ctx.font = 'bold 22px "Bangers", Impact, sans-serif';
+                    ctx.fillStyle = tf.cor;
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 3;
+                    ctx.textAlign = 'center';
+                    ctx.strokeText(tf.texto, tf.x, tf.y);
+                    ctx.fillText(tf.texto, tf.x, tf.y);
+                    ctx.restore();
+                    if (tf.vida <= 0) textosFlutuantes.splice(i, 1);
+                }
+            }
+
+            ctx.restore();
+            animFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        // Inicializa a grade de seleção ao carregar a página
+        window.onload = () => {
+            renderizarGradeSelecao();
+        };
+    </script>
+</body>
+</html>
