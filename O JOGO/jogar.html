@@ -112,6 +112,29 @@
             background-color: var(--red-neon);
         }
 
+        .btn-sprite-opcional {
+            position: fixed;
+            top: 18px;
+            right: 150px;
+            z-index: 100;
+            color: var(--gold-neon);
+            background-color: rgba(0, 0, 0, 0.75);
+            border: 2px solid var(--gold-neon);
+            padding: 8px 14px;
+            font-size: 13px;
+            font-family: var(--font-ui);
+            font-weight: 700;
+            text-transform: uppercase;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .btn-sprite-opcional:hover {
+            background-color: var(--gold-neon);
+            color: #000;
+        }
+
         /* ================= TELA DE SELEÇÃO DE PERSONAGENS ================= */
         #select-screen {
             width: 100%;
@@ -822,8 +845,25 @@
 </head>
 <body>
 
+    <!-- Filtro SVG Chroma Key para remover o fundo verde (#009400) da folha CPS2 mesmo em modo local (file://) -->
+    <svg width="0" height="0" style="position:absolute; pointer-events:none;" aria-hidden="true">
+        <defs>
+            <filter id="chroma-green" color-interpolation-filters="sRGB">
+                <feColorMatrix type="matrix" values="
+                    1  0  0  0  0
+                    0  1  0  0  0
+                    0  0  1  0  0
+                    14 -12 14 0  2.1" />
+            </filter>
+        </defs>
+    </svg>
+
     <!-- Botão para retornar ao seu livraria.html -->
     <a href="livraria.html" class="btn-voltar">Voltar ao Menu</a>
+    <input type="file" id="sprite-sheet-input" accept="image/*" style="display:none" onchange="carregarSpriteHomemSergioManual(event)">
+    <button id="btn-sprite-sergio" class="btn-sprite-opcional" onclick="document.getElementById('sprite-sheet-input').click()" title="Clique caso queira selecionar a imagem manualmente no preview online">
+        🕷️ Carregar Sprite Homem-Sergio
+    </button>
     <button id="btn-audio" class="btn-som" onclick="alternarAudio()">Som: Ligado</button>
 
     <div class="app-overlay">
@@ -832,7 +872,7 @@
         <section id="select-screen">
             <div class="header-bar">
                 <div>
-                    <h1 class="titulo-arena">O Jogo : Arena Marvel</h1>
+                    <h1 class="titulo-arena">O Jogo. </h1>
                     <p class="subtitulo-arena">Escolha seu Vingador para o Combate</p>
                 </div>
 
@@ -899,7 +939,7 @@
 
             <div class="select-actions">
                 <button id="btn-switch-selector" class="btn-sec" onclick="alternarSeletor()">Escolhendo: Jogador 1</button>
-                <button class="btn-sec" onclick="selecionarAleatorio()">Heróis Aleatórios</button>
+                <button class="btn-sec" onclick="selecionarAleatorio()">Herois Aleatorios</button>
                 <button class="btn-lutar" onclick="iniciarPartida()">Iniciar Combate!</button>
             </div>
         </section>
@@ -1192,6 +1232,287 @@
         ];
 
         /* ============================================================================
+           MOTOR DE SPRITE EXCLUSIVO DO HOMEM-SERGIO (MARVEL SUPER HEROES CPS2)
+           ============================================================================ */
+        const sergioSpriteCPS2 = {
+            pronto: false,
+            sheetExternaAtiva: false,
+            usarFiltroSVG: false,
+            atlasCanvas: null,
+            anims: {
+                idle: [],
+                walk: [],
+                jump: [],
+                crouch: [],
+                block: [],
+                light: [],
+                heavy: [],
+                special: [],
+                hit: []
+            }
+        };
+
+        // Carrega automaticamente a folha de sprites da pasta local sem usar o modelo quadriculado antigo
+        function inicializarSpriteHomemSergio() {
+            const arquivosLocais = [
+                'Arcade - Marvel Super Heroes - Fighters - Spider-Man.jpg',
+                'Arcade - Marvel Super Heroes - Fighters - Spider-Man_2.jpg',
+                'Arcade - Marvel Super Heroes - Fighters - Spider-Man_3.jpg',
+                'spiderman.jpg',
+                'spiderman.png'
+            ];
+
+            let idx = 0;
+            function tentarCarregarProximo() {
+                if (idx >= arquivosLocais.length) return;
+                const img = new Image();
+                // Não define crossOrigin='anonymous' para permitir carregamento direto via file://
+                img.onload = () => {
+                    ativarFolhaSpritesHomemSergio(img);
+                };
+                img.onerror = () => {
+                    idx++;
+                    tentarCarregarProximo();
+                };
+                img.src = arquivosLocais[idx];
+            }
+            tentarCarregarProximo();
+        }
+
+        function carregarSpriteHomemSergioManual(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    ativarFolhaSpritesHomemSergio(img);
+                    tocarSom('special');
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Mapeia as coordenadas exatas da folha CPS2 (Alvin-Earthworm) e aplica remoção do fundo verde
+        function ativarFolhaSpritesHomemSergio(img) {
+            // 1. Fatia imediatamente com as coordenadas normalizadas da folha oficial CPS2
+            fatiarPorCoordenadasCPS2(img);
+
+            // 2. Tenta remover o fundo verde via getImageData (funciona em Live Server / upload manual)
+            // Caso esteja abrindo direto via file:// (dois cliques), usa o filtro SVG #chroma-green em tempo real!
+            try {
+                extrairSpritesDaFolhaVerde(img);
+            } catch (err) {
+                sergioSpriteCPS2.atlasCanvas = img;
+                sergioSpriteCPS2.usarFiltroSVG = true;
+                sergioSpriteCPS2.sheetExternaAtiva = true;
+                sergioSpriteCPS2.pronto = true;
+            }
+
+            const btn = document.getElementById('btn-sprite-sergio');
+            if (btn) {
+                btn.textContent = '🕷️ Folha CPS2 Original Ativa!';
+                btn.style.borderColor = '#00e676';
+                btn.style.color = '#00e676';
+            }
+            renderizarGradeSelecao();
+        }
+
+        function fatiarPorCoordenadasCPS2(img) {
+            const W = img.naturalWidth || img.width;
+            const H = img.naturalHeight || img.height;
+
+            function criarFaixa(yRatio, hRatio, count, xStartRatio, xStepRatio, wRatio) {
+                const arr = [];
+                for (let i = 0; i < count; i++) {
+                    arr.push({
+                        sx: Math.round((xStartRatio + i * xStepRatio) * W),
+                        sy: Math.round(yRatio * H),
+                        sw: Math.round(wRatio * W),
+                        sh: Math.round(hRatio * H)
+                    });
+                }
+                return arr;
+            }
+
+            sergioSpriteCPS2.anims.idle    = criarFaixa(0.0025, 0.0225, 9,  0.006, 0.080,  0.056);
+            sergioSpriteCPS2.anims.walk    = criarFaixa(0.0265, 0.0235, 10, 0.008, 0.0585, 0.054);
+            sergioSpriteCPS2.anims.jump    = criarFaixa(0.0510, 0.0290, 9,  0.068, 0.068,  0.062);
+            sergioSpriteCPS2.anims.light   = criarFaixa(0.1250, 0.0300, 4,  0.015, 0.078,  0.075);
+            sergioSpriteCPS2.anims.heavy   = criarFaixa(0.1250, 0.0300, 5,  0.335, 0.076,  0.075);
+            sergioSpriteCPS2.anims.crouch  = criarFaixa(0.2440, 0.0210, 8,  0.142, 0.068,  0.060);
+            sergioSpriteCPS2.anims.block   = criarFaixa(0.4880, 0.0270, 4,  0.010, 0.074,  0.068);
+            sergioSpriteCPS2.anims.special = criarFaixa(0.5180, 0.0240, 6,  0.010, 0.073,  0.068);
+            sergioSpriteCPS2.anims.hit     = criarFaixa(0.8580, 0.0270, 4,  0.012, 0.056,  0.052);
+
+            sergioSpriteCPS2.atlasCanvas = img;
+            sergioSpriteCPS2.sheetExternaAtiva = true;
+            sergioSpriteCPS2.pronto = true;
+        }
+
+        // Remove o fundo verde (#009400) pixel a pixel e refina o recorte quando permitido pelo navegador
+        function extrairSpritesDaFolhaVerde(img) {
+            const off = document.createElement('canvas');
+            off.width = img.naturalWidth || img.width;
+            off.height = img.naturalHeight || img.height;
+            const octx = off.getContext('2d', { willReadFrequently: true });
+            octx.drawImage(img, 0, 0);
+
+            const imgData = octx.getImageData(0, 0, off.width, off.height);
+            const data = imgData.data;
+            const W = off.width, H = off.height;
+            const bgR = data[0], bgG = data[1], bgB = data[2];
+
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i], g = data[i + 1], b = data[i + 2];
+                const dist = Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB);
+                if (dist < 82 || (g > 85 && g > r * 1.3 && g > b * 1.3)) {
+                    data[i + 3] = 0;
+                }
+            }
+            octx.putImageData(imgData, 0, 0);
+
+            const linhas = [];
+            let dentroLinha = false, yInicio = 0;
+            const limX = Math.floor(W * 0.72);
+
+            for (let y = 0; y < H; y++) {
+                let cont = 0;
+                for (let x = 4; x < limX; x++) {
+                    if (data[(y * W + x) * 4 + 3] > 40) cont++;
+                }
+                if (cont > 3 && !dentroLinha) {
+                    dentroLinha = true;
+                    yInicio = y;
+                } else if (cont <= 3 && dentroLinha) {
+                    dentroLinha = false;
+                    if (y - yInicio >= 14) linhas.push({ y1: yInicio, y2: y });
+                }
+            }
+
+            function recortarLinha(linha, maxF = 9, maxRatio = 0.72) {
+                if (!linha) return [];
+                const quadros = [];
+                let dentroCol = false, xInicio = 0;
+                const maxCol = Math.floor(W * maxRatio);
+
+                for (let x = 2; x < maxCol; x++) {
+                    let tem = false;
+                    for (let y = linha.y1; y <= linha.y2; y++) {
+                        if (data[(y * W + x) * 4 + 3] > 40) { tem = true; break; }
+                    }
+                    if (tem && !dentroCol) {
+                        dentroCol = true;
+                        xInicio = x;
+                    } else if (!tem && dentroCol) {
+                        dentroCol = false;
+                        const sw = x - xInicio;
+                        if (sw >= 12 && sw < W * 0.22) {
+                            let topY = linha.y2, botY = linha.y1;
+                            for (let yy = linha.y1; yy <= linha.y2; yy++) {
+                                for (let xx = xInicio; xx <= x; xx++) {
+                                    if (data[(yy * W + xx) * 4 + 3] > 40) {
+                                        if (yy < topY) topY = yy;
+                                        if (yy > botY) botY = yy;
+                                    }
+                                }
+                            }
+                            if (botY - topY >= 14) {
+                                quadros.push({ sx: xInicio, sy: topY, sw: sw, sh: botY - topY + 1 });
+                            }
+                        }
+                        if (quadros.length >= maxF) break;
+                    }
+                }
+                return quadros;
+            }
+
+            sergioSpriteCPS2.atlasCanvas = off;
+            sergioSpriteCPS2.usarFiltroSVG = false;
+            sergioSpriteCPS2.sheetExternaAtiva = true;
+            sergioSpriteCPS2.pronto = true;
+
+            if (linhas.length >= 8) {
+                const qIdle = recortarLinha(linhas[0], 9, 0.75);
+                const qWalk = recortarLinha(linhas[1], 10, 0.75);
+                const qJump = recortarLinha(linhas[2], 8, 0.72);
+                const qLight = recortarLinha(linhas[5] || linhas[4], 6, 0.90);
+                const qHeavy = recortarLinha(linhas[6] || linhas[5], 7, 0.90);
+                const qCrouch = recortarLinha(linhas[9] || linhas[8], 5, 0.75);
+                const qBlock = recortarLinha(linhas[16] || linhas[15] || linhas[0], 4, 0.60);
+                const qSpec = recortarLinha(linhas[17] || linhas[16] || linhas[5], 5, 0.55);
+                const qHit = recortarLinha(linhas[28] || linhas[26] || linhas[0], 4, 0.60);
+
+                if (qIdle.length) sergioSpriteCPS2.anims.idle = qIdle;
+                if (qWalk.length) sergioSpriteCPS2.anims.walk = qWalk;
+                if (qJump.length) sergioSpriteCPS2.anims.jump = qJump;
+                if (qLight.length) sergioSpriteCPS2.anims.light = qLight.slice(0, 4);
+                if (qHeavy.length) sergioSpriteCPS2.anims.heavy = qHeavy.slice(0, 5);
+                if (qCrouch.length) sergioSpriteCPS2.anims.crouch = qCrouch.slice(1, 4);
+                if (qBlock.length) sergioSpriteCPS2.anims.block = qBlock.slice(0, 4);
+                if (qSpec.length) sergioSpriteCPS2.anims.special = qSpec.slice(0, 5);
+                if (qHit.length) sergioSpriteCPS2.anims.hit = qHit;
+            }
+        }
+
+        function desenharSpriteHomemSergio(ctx, lutador, esc) {
+            if (!sergioSpriteCPS2.pronto || !sergioSpriteCPS2.atlasCanvas) return false;
+
+            let animKey = 'idle';
+            if (lutador.hitStun > 0) animKey = 'hit';
+            else if (lutador.defendendo) animKey = 'block';
+            else if (lutador.atacando) {
+                if (lutador.tipoAtaque === 'special') animKey = 'special';
+                else if (lutador.tipoAtaque === 'heavy') animKey = 'heavy';
+                else animKey = 'light';
+            } else if (lutador.noChao === false) animKey = 'jump';
+            else if (lutador.agachado) animKey = 'crouch';
+            else if (Math.abs(lutador.vx || 0) > 0.6) animKey = 'walk';
+
+            const frames = (sergioSpriteCPS2.anims[animKey] && sergioSpriteCPS2.anims[animKey].length)
+                ? sergioSpriteCPS2.anims[animKey]
+                : sergioSpriteCPS2.anims.idle;
+
+            if (!frames || !frames.length) return false;
+
+            const vel = (animKey === 'light' || animKey === 'heavy') ? 3 : 6;
+            const q = frames[Math.floor((lutador.frameAnim || 0) / vel) % frames.length];
+
+            ctx.save();
+            ctx.translate(lutador.x, lutador.y);
+            ctx.scale(lutador.direcao * esc, esc);
+            ctx.imageSmoothingEnabled = false;
+
+            // Sombra no chão (desenhada antes do filtro para manter a cor preta suave)
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 26, 7, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            const piscandoHit = (lutador.hitStun > 0 && Math.floor(lutador.hitStun / 2) % 2 === 0);
+            if (sergioSpriteCPS2.usarFiltroSVG) {
+                ctx.filter = piscandoHit ? 'url(#chroma-green) brightness(2.2)' : 'url(#chroma-green)';
+            } else if (piscandoHit) {
+                ctx.filter = 'brightness(2.2)';
+            }
+
+            const alturaAlvo = lutador.agachado ? 82 : 108;
+            const proporcao = Math.min(1.65, Math.max(0.65, q.sw / q.sh));
+            const larguraAlvo = alturaAlvo * proporcao;
+
+            ctx.drawImage(
+                sergioSpriteCPS2.atlasCanvas,
+                q.sx, q.sy, q.sw, q.sh,
+                -larguraAlvo * 0.5, -alturaAlvo + 4,
+                larguraAlvo, alturaAlvo
+            );
+
+            ctx.restore();
+            return true;
+        }
+
+        /* ============================================================================
            ESTADO DE SELEÇÃO E CONFIGURAÇÃO
            ============================================================================ */
         let modoJogo = 1; // 1 = vs CPU, 2 = 2 Jogadores
@@ -1343,6 +1664,12 @@
         function desenharLutador(ctx, lutador, escalaOverride = null) {
             const h = lutador.heroi;
             const esc = (escalaOverride !== null ? escalaOverride : h.escala);
+
+            // APENAS o Homem-Sergio usa o modelo de Sprite CPS2; todos os outros mantêm o modelo original!
+            if (h.id === 'spiderman' && sergioSpriteCPS2.pronto) {
+                if (desenharSpriteHomemSergio(ctx, lutador, esc)) return;
+            }
+
             const agachadoOffset = lutador.agachado ? 18 : 0;
 
             ctx.save();
@@ -2191,8 +2518,9 @@
             animFrameId = requestAnimationFrame(gameLoop);
         }
 
-        // Inicializa a grade de seleção ao carregar a página
+        // Inicializa o Sprite CPS2 do Homem-Sergio e a grade de seleção ao carregar a página
         window.onload = () => {
+            inicializarSpriteHomemSergio();
             renderizarGradeSelecao();
         };
     </script>
